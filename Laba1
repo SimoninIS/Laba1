@@ -1,0 +1,93 @@
+from control.matlab import *
+import numpy
+import matplotlib.pyplot as plt
+import sympy
+import control
+
+def har(num1,den1,num2,den2):
+
+    W1=tf(num1,den1)
+    W2=tf(num2,den2)
+    print(W1)
+    print(W2)
+    t = numpy.linspace(0, stop=50, num=1000)
+
+    SIZE = (10, 10)
+    PER1=step(W1,t)
+    PER2=step(W2,t)
+    IMP1=impulse(W1,t)
+    IMP2=impulse(W2,t)
+    y1,x1=PER1
+    y2,x2=PER2
+    y3,x3=IMP1
+    y4,x4=IMP2
+
+    plt.figure(figsize=SIZE)
+    plt.subplot(2, 1, 1)
+    plt.plot(x1,y1, label='W1', color='r',)
+    plt.plot(x2, y2, label='W2', color='g', )
+    plt.title('Переходная характеристика')
+    plt.ylabel('Amplitude')
+    plt.xlabel('Time')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+    plt.figure(figsize=SIZE)
+    plt.subplot(2, 1, 2)
+    plt.plot(x3, y3, label='W1', color='r', )
+    plt.plot(x4, y4, label='W2', color='g', )
+    plt.title('Импульсная характеристика')
+    plt.ylabel('Amplitude')
+    plt.xlabel('Time')
+    plt.grid(True)
+    plt.legend()
+    plt.show()
+
+    plt.figure(figsize=SIZE)
+    bode(W1,color='r',label='W1')
+    bode(W2, color='g',label='W2')
+    plt.plot()
+    plt.title('АЧХ ФЧХ')
+    plt.legend()
+    plt.show()
+
+#Безынерционное звено
+print('Безынерционное звено')
+num1=[4]
+den1=[0.001,1]
+num2=[8]
+den2=[0.001,1]
+har(num1,den1,num2,den2)
+
+#Аппериодическое звено
+print('Аппериодическое звено')
+num1=[1]
+den1=[3,1]
+num2=[2]
+den2=[6,1]
+har(num1,den1,num2,den2)
+
+#Интегрирующее звено
+print('Интегрирующее звено')
+num1=[1]
+den1=[3,0]
+num2=[1]
+den2=[6,0]
+har(num1,den1,num2,den2)
+
+#Идеальное дифференцирующее звено
+print('Идеальное дифференцирующее звено')
+num1=[5.,0]
+den1=[0.001,1]
+num2=[10.,0]
+den2=[0.001,1]
+har(num1,den1,num2,den2)
+
+#Реальное дифференцирующее звено
+print('Реальное дифференцирующее звено')
+num1=[2,0]
+den1=[2,1]
+num2=[4,0]
+den2=[4,1]
+har(num1,den1,num2,den2)
