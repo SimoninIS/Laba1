@@ -1,0 +1,216 @@
+from control.matlab import *
+import numpy as np
+import matplotlib.pyplot as plt
+import sympy
+import control
+from sympy import *
+from sympy import I
+from numpy import arange
+import math as m
+
+def Lab2 (Koc,Tg,Kpt,Tpt,Ku,Tu):
+    Woc=tf([Koc],[0,1])
+    print('Жесткая обратная связь: ' , Woc)
+    Wg=tf([1],[Tg,1])
+    print('Генератор: ' , Wg)
+    Wpar=tf([Kpt],[Tpt,1])
+    print('Паровая турбина: ' , Wpar)
+    Wu=tf([Ku],[Tu,1])
+    print('Исполнительное устройство: ' , Wu)
+    Wekv=Wpar*Wg*Wu
+    print('Эквивалентирование последовательных элементов: ', Wekv)
+    Wzamk=feedback(Woc,Wekv)
+    print('Передаточная функция замкнутой САУ : \n %s'%Wzamk)
+    Wraz=Wekv*Woc
+    print('Передаточная функция разомкнутой САУ : \n %s'%Wraz)
+
+#1)Построение переходной характеристики:
+    y,x=step(Wzamk)
+    plt.plot(x, y, "g", label="Название")
+    plt.title("Переходная характеристика")
+    plt.ylabel("Амплитуда")
+    plt.xlabel("Время, с")
+    plt.grid(True)
+    plt.show()
+
+# 2) Полюса передаточной функции
+    Pol = pole(Wzamk)
+    print("Полюса: \n %s"%pole(Wzamk))
+    k = 0
+    for i in range(len(Pol)):
+        if Pol[i].real > 0:
+            k = k + 1
+        i = i + 1
+    if k == 0:
+        print('Система устойчива по критерию Михайлова, т.к. все корни у-ния левые')
+
+    else:
+        print('Система не устойчива, т.к. не все корни у-ния левые')
+
+    print("Нули: \n %s \n"%zero(Wzamk))
+    pzmap(Wzamk)
+    plt.title("Расположение нулей и полюсов на комплексной плоскости")
+    plt.grid(True)
+    plt.show()
+    plt.figure()
+
+# 3) Критерий Найквиста
+
+    w=np.linspace(0,2*np.pi, 500)
+    r=1
+    x=r*np.cos(w)
+    y=r*np.sin(w)
+    nyquist(Wraz)
+    plt.title('Диаграмма Найквиста ')
+    plt.ylabel('Imag')
+    plt.xlabel('Real')
+    plt.grid(True)
+    plt.plot(x,y,"r")
+    plt.show()
+
+# 4) Годограф Михайлова
+    D = Wzamk.den
+    D1 = D[0]
+    D2 = D1[0]
+    print("Коэфф-нты характерист у-ния: \n %s" % D2)
+    n = len(D2)
+    print("Количество элементов: \n %s" % n)
+    w = symbols('w', real=True)
+    result = 0
+    for i in range(n):
+        Z = D2[i] * (I * w) ** (n - 1)
+        result += Z
+        n -= 1
+    print("Характеристический многочлен замкнутой системы: \n %s" % result)
+    Real = re(result)
+    Im = im(result)
+    print("Действительная часть Re: \n %s" % Real)
+    print("Мнимая часть Im: \n %s" % Im)
+    y = [Im.subs({w: q}) for q in arange(-0.1, 25)]
+    x = [Real.subs({w: q}) for q in arange(-0.1, 25)]
+    plt.title('Годограф Михайлова')
+    plt.plot(x, y)
+    plt.grid(True)
+    plt.show()
+
+# 5) ЛАЧХ И ЛФЧХ
+
+    mag, phase, omega = bode(Wraz, dB=True)
+    plt.plot()
+    plt.title('ЛАЧХ ЛФЧХ')
+    plt.show()
+
+# 6) Критерий Гурвица:
+
+from control.matlab import *
+import numpy as np
+import matplotlib.pyplot as plt
+import sympy
+import control
+from sympy import *
+from sympy import I
+import math
+
+
+def Gurvic(Wzamk, fullInform):
+    isLastValueWithS = False
+
+    ListOfKoef = []
+    for i in Wzamk.den:
+        for j in i:
+            for koef in j:
+                ListOfKoef.append(koef)
+
+    StepenPolinoma = len(ListOfKoef) - 1
+    # Проверка какой элемент в конце полинома, с операт\ором или без
+    if ListOfKoef[-1] == 0:
+        isLastValueWithS = True
+    # Набор матрицы для Гурвица
+    a = np.diag(ListOfKoef[1:StepenPolinoma])
+    iterSdvig = -1
+    for i in range(0, StepenPolinoma - 1):
+        if i % 2 == 0:
+            iterSdvig += 1
+        for j in range(0, StepenPolinoma - 1):
+            if i != j:
+                if i % 2 == 0:
+                    if (2 * j + 1 <= StepenPolinoma):
+                        try:
+                            a[i, j + iterSdvig] = ListOfKoef[2 * j + 1]
+                        except IndexError:
+                            break
+                else:
+                    if (2 * j <= StepenPolinoma):
+                        try:
+                            a[i, j + iterSdvig] = ListOfKoef[2 * j]
+                        except IndexError:
+                            break
+    det = np.linalg.det(a)
+
+
+    if fullInform:
+        print("Матрица коэфициентов:")
+        print(ListOfKoef, "\n")
+        print("Матрица Гурвица:")
+        print(a, "\n")
+        SystemStability = True
+
+        # Нахождение определителей
+        for i in range(0, StepenPolinoma - 1):
+            print("Определитель ", StepenPolinoma - 1 - i, "степени")
+            print(np.linalg.det(a), "\n")
+            if np.linalg.det(a) < 0:
+                SystemStability = False
+            a = np.delete(a, (StepenPolinoma - 2 - i), axis=0)
+            a = np.delete(a, (StepenPolinoma - 2 - i), axis=1)
+
+            if SystemStability:
+                print("Система стабильна по критерию Гурвица")
+            else:
+                print("Система не стабильна по критерию Гурвица")
+    return (det)
+
+from control.matlab import *
+import matplotlib.pyplot as plt
+import numpy as np
+Woc=tf([0.09920634920634765],[0,1])
+Wg=tf([1],[6,1])
+Wpar=tf([4],[4,1])
+Wu=tf([21],[6,1])
+Wekv=Wpar*Wg*Wu
+Wzamk=feedback(Woc,Wekv)
+
+#7 Поиск kпред:
+
+def Poisk(nachalo, konec):
+    tochnost = 1
+    flag = True
+    while tochnost > 0.0000001:
+        k_oc = np.linspace(nachalo, konec, num=10)
+        opredeliteli = []
+        for i in k_oc:
+            Woc = tf([i], [1e-15, 1])
+            Wzamk = feedback(Wekv, Woc, -1)
+            b = Gurvic(Wzamk, False)
+            opredeliteli.append(b)
+        for i in range(0, len(opredeliteli) - 1):
+            if (opredeliteli[i + 1] < 0 and opredeliteli[i] > 0) or (opredeliteli[i + 1] > 0 and opredeliteli[i] < 0):
+                nachalo = k_oc[i]
+                konec = k_oc[i + 1]
+                tochnost = abs((opredeliteli[i] - opredeliteli[i + 1]) / 2)
+                flag = False
+        if flag:
+            nachalo = nachalo - 10
+            konec = konec + 10
+    return (nachalo)
+
+
+k_oc = Poisk(0, 4)
+print("k_oc=",k_oc)
+Gurvic(Wzamk, True)
+
+
+
+#Lab2(18, 6, 4, 4, 21, 6,) # при kпр<kos (исходная система)
+#Lab2(0.09920634920634765, 6, 4, 4, 21, 6) # при kпр=kos
+Lab2(0.05, 6, 4, 4, 21, 6) # при kпр>kos
