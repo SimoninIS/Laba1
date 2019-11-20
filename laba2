@@ -56,17 +56,47 @@ def Lab2 (Koc,Tg,Kpt,Tpt,Ku,Tu):
 
 # 3) Критерий Найквиста
 
-    w=np.linspace(0,2*np.pi, 500)
-    r=1
-    x=r*np.cos(w)
-    y=r*np.sin(w)
-    nyquist(Wraz)
-    plt.title('Диаграмма Найквиста ')
-    plt.ylabel('Imag')
-    plt.xlabel('Real')
+    GG = np.logspace(-3, 3, 10000)
+    real, imag, freq = control.nyquist(Wraz, GG)
+    real = list(real)
+    imag = list(imag)
+    y1 = []
+    x1 = []
+    y2 = []
+    x2 = []
+
+    for i in range(0, len(real)):
+        z = abs(complex(real[i], imag[i]))
+        if 0.999 < z < 1.001:
+            fi = atan(imag[i] / real[i]) * 180 / math.pi
+            print("Запас устойчивости по фазе:")
+            print("Амплитуда - ", real[i], imag[i])
+            plt.plot(real[i], imag[i], '-x')
+            plt.plot((0,real[i]), (0,imag[i]))
+            print("Угол - ", fi)
+            break
+
+    for i in range(0, len(real)):
+        z = abs(complex(real[i], imag[i]))
+        if -0.000999 < imag[i] < 0.000999 and abs(real[i]) > 0.15:
+            print("Запас устойчивости по амлитуде:")
+            print("Точка пересечения с осью - ", real[i], imag[i])
+            plt.plot(real[i], imag[i], '-o')
+            plt.plot((real[i], -1), (imag[i], 0))
+            break
+
+    phi = np.linspace(0, 2 * np.pi, 100)
+    r = np.sqrt(1.0)
+    x1 = r * np.cos(phi)
+    x2 = r * np.sin(phi)
+    plt.plot(x1, x2)
+    plt.title("Диаграмма Найквиста")
+    plt.plot(label="РќР°Р·РІР°РЅРёРµ")
+    plt.xlabel("+1")
+    plt.ylabel("+j")
     plt.grid(True)
-    plt.plot(x,y,"r")
     plt.show()
+
 
 # 4) Годограф Михайлова
     D = Wzamk.den
