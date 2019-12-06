@@ -8,9 +8,9 @@ from sympy import *
 def Func():
 
 #ПИД РЕГУЛЯТОР
-    #Kp = 0.08095
-    #Ki = 0.009905
-    #Kd = 0.637
+    Kp = 0.08095
+    Ki = 0.009905
+    Kd = 0.637
 #ПИ РЕГУЛЯТОР
     #Kd = 0.45
     #Kp = 0.05
@@ -20,8 +20,7 @@ def Func():
     W1 = 1 / (6 * s + 1)
     W2 = 4 / (4 * s + 1)
     W3 = 21 / (6 * s + 1)
-    #W4 = (Kp * s + Kd * s ** 2 + Ki) / (s)
-    W4=1/1
+    W4 = (Kp * s + Kd * s ** 2 + Ki) / (s)
     W = (W1 * W2 * W3 * W4) / (1 + W1 * W2 * W3 * W4)
     W = together(W)
     (num, den) = fraction(W)
